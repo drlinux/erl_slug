@@ -9,7 +9,7 @@ erl_slug
 {applications, [
 kernel,
 stdlib,
-crypto,
+crypto
 ]},
 {env, []}
 ]}.
