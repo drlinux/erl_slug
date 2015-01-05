@@ -1,4 +1,4 @@
--module(slugs).
+-module(erl_slug).
 
 -export([slugify/1]).
 
