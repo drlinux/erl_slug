@@ -1,0 +1,15 @@
+{application, erl_slug,
+[
+{description, "Erlang slug generator module"},
+{vsn, "0.0.1"},
+{modules, [
+erl_slug
+]},
+{registered, []},
+{applications, [
+kernel,
+stdlib,
+crypto,
+]},
+{env, []}
+]}.
