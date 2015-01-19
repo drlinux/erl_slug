@@ -1,130 +1,91 @@
 -module(erl_slug).
+-compile(export_all).
 
--export([slugify/1]).
+slugify(String) ->
+    slugify(String, []).
 
--define(tolower(C), (C+32)).
--define(islower(C), (C >= $a andalso C =< $z)).
--define(isupper(C), (C >= $A andalso C =< $Z)).
--define(isdigit(C), (C >= $1 andalso C =< $9)).
--define(isspace(C), (
-    C =:= $\s orelse C =:= $\n orelse C =:= $\t orelse C =:= $\r
-)).
-
--define(isdiacrit(C), (
-    (C >= 224 andalso C =/= 247) orelse
-    (C >= 192 andalso C =< 223 andalso C =/= 215) orelse
-    C =:= 131 orelse C =:= 138 orelse C =:= 140 orelse C =:= 142 orelse
-    C =:= 154 orelse C =:= 156 orelse C =:= 158 orelse C =:= 159 orelse
-    C =:= 286 orelse C =:= 287 orelse C =:= 304 orelse C =:= 305 orelse
-    C =:= 350 orelse C =:= 351
-)).
-
-slugify([]) -> [];
-slugify(<<>>) -> <<>>;
-slugify(Str) when is_list(Str) ->
-    lists:flatten(slugify(lists:flatten(Str), []));
-slugify(Str) when is_binary(Str) ->
-    list_to_binary(lists:flatten(slugify(binary_to_list(Str)), [])).
-
-slugify([C | Rest], Acc) when ?islower(C) orelse ?isdigit(C) orelse C =:= $_ ->
-    slugify(Rest, [C | Acc]);
-slugify([C | Rest], Acc) when ?isupper(C) ->
-    slugify(Rest, [?tolower(C) | Acc]);
-slugify([C | Rest], Acc) when ?isspace(C) orelse C =:= $/ ->
-    Acc1 = case Acc of
-        [$- | _] -> Acc;
-        _ -> [$- | Acc]
-    end,
-    slugify(Rest, Acc1);
-slugify([C | Rest], Acc) when ?isdiacrit(C) ->
-    slugify(Rest, [translit(C) | Acc]);
-slugify([_ | Rest], Acc) ->
-  slugify(Rest, Acc);
-slugify([], Acc) ->
-    Acc1 = case Acc of
-        [$- | T] -> T;
-        _ -> Acc
-    end,
-    case lists:reverse(Acc1) of
-        [$- | T2] -> T2;
-        Out -> Out
-    end.
-
-translit(131) -> $f;
-translit(138) -> $s;
-translit(140) -> "oe";
-translit(142) -> $z;
-translit(154) -> $s;
-translit(156) -> "oe";
-translit(158) -> $z;
-translit(159) -> $y;
-translit(192) -> $a;
-translit(193) -> $a;
-translit(194) -> $a;
-translit(195) -> $a;
-translit(196) -> $a;
-translit(197) -> $a;
-translit(198) -> "ae";
-translit(199) -> $c;
-translit(200) -> $e;
-translit(201) -> $e;
-translit(202) -> $e;
-translit(203) -> $e;
-translit(204) -> $i;
-translit(205) -> $i;
-translit(206) -> $i;
-translit(207) -> $i;
-translit(208) -> "dh";
-translit(209) -> $n;
-translit(210) -> $o;
-translit(211) -> $o;
-translit(212) -> $o;
-translit(213) -> $o;
-translit(214) -> $o;
-translit(216) -> $o;
-translit(217) -> $u;
-translit(218) -> $u;
-translit(219) -> $u;
-translit(220) -> $u;
-translit(221) -> $y;
-translit(222) -> "th";
-translit(223) -> "ss";
-translit(224) -> $a;
-translit(225) -> $a;
-translit(226) -> $a;
-translit(227) -> $a;
-translit(228) -> $a;
-translit(229) -> $a;
-translit(230) -> "ae";
-translit(231) -> $c;
-translit(232) -> $e;
-translit(233) -> $e;
-translit(234) -> $e;
-translit(235) -> $e;
-translit(236) -> $i;
-translit(237) -> $i;
-translit(238) -> $i;
-translit(239) -> $i;
-translit(240) -> "dh";
-translit(241) -> $n;
-translit(242) -> $o;
-translit(243) -> $o;
-translit(244) -> $o;
-translit(245) -> $o;
-translit(246) -> $o;
-translit(248) -> $o;
-translit(249) -> $u;
-translit(250) -> $u;
-translit(251) -> $u;
-translit(252) -> $u;
-translit(253) -> $y;
-translit(254) -> "th";
-translit(255) -> $y;
-%% Turkish chracters
-translit(286) -> $g;
-translit(287) -> $g;
-translit(304) -> $i;
-translit(305) -> $i;
-translit(350) -> $s;
-translit(351) -> $s;
-translit(C) -> C.
+slugify([], Acc) -> Output = case Acc of [45 | T] -> T; _ -> Acc end, lists:reverse(Output);
+slugify([C | Part], Acc) ->
+    NewC = case C of
+               C when C > -1, C < 10 -> C; %%  Keep numbers same
+               C when C > 96, C < 123 -> C; %% Keep lowercase as lowercase
+               C when C > 64, C < 91 -> C + 32; %% made upercase to lowercase
+               C when C =:= 131 -> 102;
+               C when C =:= 138 -> 115;
+               C when C =:= 140 -> 79;
+               C when C =:= 142 -> 122;
+               C when C =:= 154 -> 115;
+               C when C =:= 156 -> 79;
+               C when C =:= 158 -> 122;
+               C when C =:= 159 -> 121;
+               C when C =:= 192 -> 97;
+               C when C =:= 193 -> 97;
+               C when C =:= 194 -> 97;
+               C when C =:= 195 -> 97;
+               C when C =:= 196 -> 97;
+               C when C =:= 197 -> 97;
+               C when C =:= 198 -> 97;
+               C when C =:= 200 -> 101;
+               C when C =:= 201 -> 101;
+               C when C =:= 202 -> 101;
+               C when C =:= 203 -> 101;
+               C when C =:= 204 -> 105;
+               C when C =:= 205 -> 105;
+               C when C =:= 206 -> 105;
+               C when C =:= 207 -> 105;
+               C when C =:= 208 -> 100;
+               C when C =:= 209 -> 110;
+               C when C =:= 210 -> 79;
+               C when C =:= 211 -> 79;
+               C when C =:= 212 -> 79;
+               C when C =:= 213 -> 79;
+               C when C =:= 216 -> 79;
+               C when C =:= 217 -> 117;
+               C when C =:= 218 -> 117;
+               C when C =:= 219 -> 117;
+               C when C =:= 221 -> 121;
+               C when C =:= 222 -> 116;
+               C when C =:= 223 -> 115;
+               C when C =:= 224 -> 97;
+               C when C =:= 225 -> 97;
+               C when C =:= 226 -> 97;
+               C when C =:= 227 -> 97;
+               C when C =:= 228 -> 97;
+               C when C =:= 229 -> 97;
+               C when C =:= 230 -> 97;
+               C when C =:= 232 -> 101;
+               C when C =:= 233 -> 101;
+               C when C =:= 234 -> 101;
+               C when C =:= 235 -> 101;
+               C when C =:= 236 -> 105;
+               C when C =:= 237 -> 105;
+               C when C =:= 238 -> 105;
+               C when C =:= 239 -> 105;
+               C when C =:= 240 -> 100;
+               C when C =:= 241 -> 110;
+               C when C =:= 242 -> 79;
+               C when C =:= 243 -> 79;
+               C when C =:= 244 -> 79;
+               C when C =:= 245 -> 79;
+               C when C =:= 248 -> 79;
+               C when C =:= 249 -> 117;
+               C when C =:= 250 -> 117;
+               C when C =:= 251 -> 117;
+               C when C =:= 253 -> 121;
+               C when C =:= 254 -> 116;
+               C when C =:= 255 -> 121;
+               %% Turkish chracters
+               C when C =:= 286 -> 103;
+               C when C =:= 287 -> 103;
+               C when C =:= 304 -> 105;
+               C when C =:= 305 -> 105;
+               C when C =:= 350 -> 115;
+               C when C =:= 351 -> 115;
+               _ -> 45 %% replace all other characters with an '-'
+           end,
+    NewAcc = case {NewC, Acc} of
+                 {45, []} -> []; %% check '-' character
+                 {45, [45 | _ ]} -> Acc; %% check duplicated '-' characters
+                 _ -> [NewC | Acc]
+             end,
+    slugify(Part, NewAcc).
